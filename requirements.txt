@@ -1,0 +1,16 @@
+google-generativeai
+langchain
+langchain-google-genai
+langchain-community
+langchain-chroma
+langgraph
+chromadb
+ragas
+fastapi
+uvicorn
+python-dotenv
+pypdf
+streamlit
+python-multipart
+datasets
+pandas
