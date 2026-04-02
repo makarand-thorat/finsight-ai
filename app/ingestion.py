@@ -13,7 +13,7 @@ CHROMA_DIR = Path("chroma_db")
 UPLOAD_DIR.mkdir(exist_ok=True)
 
 embeddings = GoogleGenerativeAIEmbeddings(
-    model="models/embedding-001",
+    model="gemini-embedding-001",
     google_api_key=os.getenv("GEMINI_API_KEY")
 )
 

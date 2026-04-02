@@ -9,7 +9,7 @@ load_dotenv()
 CHROMA_DIR = Path("chroma_db")
 
 embeddings = GoogleGenerativeAIEmbeddings(
-    model="models/embedding-001",
+    model="gemini-embedding-001",
     google_api_key=os.getenv("GEMINI_API_KEY")
 )
 
@@ -29,7 +29,7 @@ def retrieve_context(query: str, k: int = 4) -> list:
 
 def format_context(docs: list) -> str:
     context = "\n\n".join([
-        f"Source: Page {doc.metadata.get('page', 'unknown')}\n{doc.content}"
+        f"Source: Page {doc.metadata.get('page', 'unknown')}\n{doc.page_content}"
         for doc in docs
     ])
     return context

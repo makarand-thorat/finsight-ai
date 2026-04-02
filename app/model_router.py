@@ -13,7 +13,7 @@ Never make up information. Always cite the page number when possible."""
 def get_model(model_name: str = "gemini"):
     if model_name == "gemini":
         return ChatGoogleGenerativeAI(
-            model="gemini-2.0-flash",
+            model="gemini-2.5-flash-lite",
             google_api_key=os.getenv("GEMINI_API_KEY"),
             temperature=0.1
         )
@@ -34,10 +34,16 @@ Answer based strictly on the context above:""")
     ]
 
     response = model.invoke(messages)
+    content = response.content
+    if isinstance(content, list):
+        content = " ".join(
+            part.get("text", "") if isinstance(part, dict) else str(part)
+            for part in content
+        )
 
     return {
         "question": query,
-        "answer": response.content,
+        "answer": content,
         "model_used": model_name,
         "context_used": context
     }
