@@ -85,7 +85,7 @@ with col1:
                     if run_evaluation and data["scores"]:
                         st.subheader("RAGAS Evaluation Scores")
                         scores = data["scores"]
-                        m1, m2, m3, m4 = st.columns(4)
+                        m1, m2, m3 = st.columns(3)
                         m1.metric(
                             "Faithfulness",
                             f"{scores.get('faithfulness', 0):.3f}",
@@ -96,15 +96,11 @@ with col1:
                             f"{scores.get('answer_relevancy', 0):.3f}",
                             help="Does the answer address the question?"
                         )
+                        
                         m3.metric(
-                            "Context Recall",
-                            f"{scores.get('context_recall', 0):.3f}",
-                            help="Were the right chunks retrieved?"
-                        )
-                        m4.metric(
                             "Average",
                             f"{scores.get('average', 0):.3f}",
-                            help="Average across all three metrics"
+                            help="Average across all the metrics"
                         )
 
                 else:
@@ -131,9 +127,6 @@ with col2:
                 }, {
                     "Metric": "Answer Relevancy",
                     "Score": avg_scores.get("answer_relevancy", 0)
-                }, {
-                    "Metric": "Context Recall",
-                    "Score": avg_scores.get("context_recall", 0)
                 }])
                 st.dataframe(
                     scores_df,
@@ -155,10 +148,10 @@ with col2:
                     with st.expander(f"Q: {r['question'][:60]}..."):
                         st.caption(f"Model: {r['model_used']} · {r['timestamp']}")
                         st.write(r["answer"])
-                        cols = st.columns(3)
+                        cols = st.columns(2)
                         cols[0].metric("Faithfulness", r["scores"].get("faithfulness", 0))
                         cols[1].metric("Relevancy", r["scores"].get("answer_relevancy", 0))
-                        cols[2].metric("Context Recall", r["scores"].get("context_recall", 0))
+                        
 
     except Exception as e:
         st.warning(f"Dashboard unavailable — make sure the API is running: {str(e)}")

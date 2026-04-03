@@ -1,0 +1,11 @@
+{
+  "timestamp": "20260403_115720",
+  "model_used": "gemini",
+  "question": "total revenue of 2024",
+  "answer": "Total revenue reached 5.2 billion euros in 2024. (Page 0)",
+  "scores": {
+    "faithfulness": 0.0,
+    "answer_relevancy": 0.0,
+    "average": 0.0
+  }
+}

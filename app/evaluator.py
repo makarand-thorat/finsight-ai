@@ -1,45 +1,62 @@
 import os
+import re
 import json
 from datetime import datetime
 from pathlib import Path
 from dotenv import load_dotenv
-from datasets import Dataset
-from ragas import evaluate
-from ragas.metrics import faithfulness, answer_relevancy, context_recall
-from ragas.llms import LangchainLLMWrapper
-from ragas.embeddings import LangchainEmbeddingsWrapper
-from langchain_google_genai import ChatGoogleGenerativeAI, GoogleGenerativeAIEmbeddings
-import langchain
-langchain.debug = True
+from langchain_google_genai import ChatGoogleGenerativeAI
+from langchain_core.messages import HumanMessage
+
 load_dotenv()
 
 RESULTS_DIR = Path("eval_results")
 RESULTS_DIR.mkdir(exist_ok=True)
 
 
-def get_ragas_llm():
-    llm = ChatGoogleGenerativeAI(
-        model="gemini-2.5-flash-lite",
+def get_llm():
+    return ChatGoogleGenerativeAI(
+        model="gemini-3-flash-preview",
         google_api_key=os.getenv("GEMINI_API_KEY"),
         temperature=0.1,
-        max_output_tokens=8192
+        max_output_tokens=512
     )
-    return LangchainLLMWrapper(llm)
 
 
-def get_ragas_embeddings():
-    embeddings = GoogleGenerativeAIEmbeddings(
-        model="gemini-embedding-001",
-        google_api_key=os.getenv("GEMINI_API_KEY")
-    )
-    return LangchainEmbeddingsWrapper(embeddings)
+def extract_score(response_content) -> float:
+    if isinstance(response_content, list):
+        response_content = response_content[0].get("text", "0.0")
+    match = re.search(r"[\d.]+", str(response_content))
+    score = float(match.group()) if match else 0.0
+    return round(min(1.0, max(0.0, score)), 3)
 
-def _extract_score(value) -> float:
-    """Safely extract a float score from ragas result (may be list or float)."""
-    if isinstance(value, list):
-        valid = [v for v in value if v is not None and not (isinstance(v, float) and v != v)]  # filter NaN
-        return float(valid[0]) if valid else 0.0
-    return float(value) if value is not None else 0.0
+
+def evaluate_faithfulness(answer: str, context: str) -> float:
+    llm = get_llm()
+    prompt = f"""Rate the faithfulness of this answer on a scale of 0 to 1.
+Faithfulness means the answer is grounded in the context and contains no made up information.
+
+Context: {context[:1000]}
+Answer: {answer}
+
+Reply with ONLY a decimal number between 0 and 1. Example: 0.85"""
+
+    response = llm.invoke([HumanMessage(content=prompt)])
+    return extract_score(response.content)
+
+
+def evaluate_relevancy(question: str, answer: str) -> float:
+    llm = get_llm()
+    prompt = f"""Rate the relevancy of this answer on a scale of 0 to 1.
+Relevancy means the answer directly addresses the question asked.
+
+Question: {question}
+Answer: {answer}
+
+Reply with ONLY a decimal number between 0 and 1. Example: 0.85"""
+
+    response = llm.invoke([HumanMessage(content=prompt)])
+    return extract_score(response.content)
+
 
 def evaluate_response(
     question: str,
@@ -48,31 +65,21 @@ def evaluate_response(
     ground_truth: str = None
 ) -> dict:
     try:
-        context_list = [c.strip() for c in context.split("\n\n") if c.strip()]
+        print("Running faithfulness evaluation...")
+        faithfulness_score = evaluate_faithfulness(answer, context)
+        print(f"Faithfulness: {faithfulness_score}")
 
-        data = {
-            "question": [question],
-            "answer": [answer],
-            "contexts": [context_list],
-            "ground_truth": [ground_truth if ground_truth else answer]
-        }
-
-        dataset = Dataset.from_dict(data)
-
-        result = evaluate(
-            dataset=dataset,
-            metrics=[faithfulness, answer_relevancy, context_recall],
-            llm=get_ragas_llm(),
-            embeddings=get_ragas_embeddings()
-        )
+        print("Running relevancy evaluation...")
+        relevancy_score = evaluate_relevancy(question, answer)
+        print(f"Relevancy: {relevancy_score}")
 
         scores = {
-            "faithfulness": round(_extract_score(result["faithfulness"]), 3),
-            "answer_relevancy": round(_extract_score(result["answer_relevancy"]), 3),
-            "context_recall": round(_extract_score(result["context_recall"]), 3),
+            "faithfulness": faithfulness_score,
+            "answer_relevancy": relevancy_score,
+            "average": round(
+                (faithfulness_score + relevancy_score) / 2, 3
+            )
         }
-        scores["average"] = round(
-        sum(scores[k] for k in ["faithfulness", "answer_relevancy", "context_recall"]) / 3, 3)
 
         return scores
 
@@ -81,7 +88,6 @@ def evaluate_response(
         return {
             "faithfulness": 0.0,
             "answer_relevancy": 0.0,
-            "context_recall": 0.0,
             "average": 0.0,
             "error": str(e)
         }
@@ -128,7 +134,6 @@ def get_average_scores() -> dict:
     total = {
         "faithfulness": 0,
         "answer_relevancy": 0,
-        "context_recall": 0
     }
 
     for r in results:
