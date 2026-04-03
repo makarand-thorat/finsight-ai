@@ -25,7 +25,7 @@ def get_llm():
 def extract_score(response_content) -> float:
     if isinstance(response_content, list):
         response_content = response_content[0].get("text", "0.0")
-    match = re.search(r"[\d.]+", str(response_content))
+    match = re.search(r"-?[\d.]+", str(response_content))
     score = float(match.group()) if match else 0.0
     return round(min(1.0, max(0.0, score)), 3)
 
