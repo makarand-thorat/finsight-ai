@@ -1,0 +1,11 @@
+{
+  "timestamp": "20260403_123922",
+  "model_used": "gemini",
+  "question": "What risk management procedure was done by the banks?",
+  "answer": "The bank conducted stress tests across all major portfolios. (Page 0)",
+  "scores": {
+    "faithfulness": 1.0,
+    "answer_relevancy": 1.0,
+    "average": 1.0
+  }
+}
