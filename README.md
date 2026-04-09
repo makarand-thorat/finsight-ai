@@ -1,6 +1,6 @@
 # 📊 FinSight AI — Production RAG Evaluation Platform
 
-A production-grade Retrieval-Augmented Generation (RAG) system for financial documents, featuring automated LLM-as-judge evaluation, LangGraph orchestration, FastAPI backend, and a Streamlit dashboard.
+A production-grade Retrieval-Augmented Generation (RAG) system for financial documents, with automated LLM-as-judge evaluation, LangGraph orchestration, FastAPI backend, and a Streamlit dashboard.
 
 ---
 
